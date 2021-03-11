@@ -24,8 +24,11 @@ if(isset($_POST['AddLine'])){
 
 if(isset($_POST['AddPlatform'])){
     // this is a platform to add.
+    $manager = new manager();
 
-    header('location:index.php?addp=TRUE'); // return to the homepage and place result.
+    $retval = $manager->addPlatform($_POST['PlatformName'], $_POST['APILink'], $_POST['RecycleLimit'], $_POST['CharacterLimit']);
+
+    header('location:index.php?addp=' . ($retval ? 'true' : 'false')); // return to the homepage and place result.
     die(); // we're done here. 
 }
 
@@ -34,7 +37,7 @@ if(isset($_POST['AddCategory'])){
 
     $retval = $manager->addCategory($_POST['CategoryName']);
 
-    header('location:index.php?addp=' . ($retval ? 'true' : 'false')); // return to the homepage and place result.
+    header('location:index.php?addc=' . ($retval ? 'true' : 'false')); // return to the homepage and place result.
     die(); // we're done here. 
 }
 

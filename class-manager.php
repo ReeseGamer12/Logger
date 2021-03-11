@@ -30,7 +30,22 @@ class manager{
         
     }
 
-    function addPlatform(){ // RETURN BOOL
+    function addPlatform($name, $apilink, $recyclelimit, $charlimit){ // RETURN BOOL
+        if($name == ''){
+            // there is nothing to use 
+            return false;
+        }
+        
+        return $this->sql->sqlCommand("INSERT INTO Platforms (PlatformName, APILink, RecycleLimit, CharacterLimit) VALUES (:name, :api, :recyc, :char)", 
+            array(
+                ':name' => $name,
+                ':api' => $apilink,
+                ':recyc' => $recyclelimit,
+                ':char' => $charlimit,
+            ), true); 
+
+        return false; // if somehow we don't return. This should never fire. 
+
 
     }
 
