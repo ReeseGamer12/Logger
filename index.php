@@ -5,7 +5,27 @@ require_once("config.php");
 ?>
 
 <form action="authenticate.php" method="POST">
+    <select name="">
+        <?php 
+            // we'll have to get the platforms here. 
+        ?>
+    </select>
+    <select name="">
+        <?php 
+            // we'll have to get the platforms here. 
+        ?>
+    </select>
 
+    <label for="">Label</label> <input name="" id="" type="text" /><br />
+    <label for="">Label</label> <input name="" id="" type="text" /><br />
+    <label for="">Label</label> <input name="" id="" type="text" /><br />
+    <label for="">Label</label> <input name="" id="" type="text" /><br />
+    <label for="">Label</label> <input name="" id="" type="text" /><br />
+    <label for="">Label</label> <input name="" id="" type="text" /><br />
+    <label for="">Label</label> <input name="" id="" type="text" /><br />
+    <label for="">Label</label> <input name="" id="" type="text" /><br />
+    <label for="">Label</label> <input name="" id="" type="text" /><br />
+    <label for="">Label</label> <input name="" id="" type="text" /><br />
     <input type="submit" name="AddLine" />
 </form>
 
@@ -19,3 +39,8 @@ require_once("config.php");
 </form>
 
 <h3>Add Category</h3>
+<form action="authenticate.php" method="POST">
+    <label for="CategoryName">Category Name</label> <input name="CategoryName" id="CategoryName" type="text" /><br />
+    <input type="submit" name="AddCategory" />
+</form>
+

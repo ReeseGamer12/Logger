@@ -9,5 +9,12 @@
 *
 */
 
+// define the SQL data. 
+$sqlCFG = array(
+    'db' => 'SocialMedia',
+    'user' => 'root',
+    'pass' => 'root'
+);
+
 require_once("class-sql.php");
 require_once("class-manager.php");

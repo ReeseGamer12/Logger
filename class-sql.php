@@ -24,6 +24,8 @@ class sqlControl {
 		// load the SQL system
 		global $sqlCFG;
 		
+		error_log("loaded class manager");
+
 		try {  
 			$this->dbh = new PDO('mysql:host=localhost;dbname=' . $sqlCFG['db'], $sqlCFG['user'], $sqlCFG['pass']);
 		}  
@@ -57,14 +59,21 @@ class sqlControl {
 	
 		$this->STH->execute($value);
 		
-		if($log){
-			$errlog = $this->STH->errorInfo();
+		$errlog = $this->STH->errorInfo();
 		
+		if($log){
+			
 			error_log("Log 0: " . $errlog[0]);
 			error_log("Log 1: " . $errlog[1]);
 			error_log("Log 2: " . $errlog[2]);
+
 		}
-	
+
+		if($errlog[0] == '00000'){	
+			return true; // this worked.
+		}
+
+		return false;
 	}
 	
 	public function VarFilter($var){

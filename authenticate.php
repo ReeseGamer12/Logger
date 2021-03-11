@@ -29,6 +29,15 @@ if(isset($_POST['AddPlatform'])){
     die(); // we're done here. 
 }
 
+if(isset($_POST['AddCategory'])){
+    $manager = new manager();
+
+    $retval = $manager->addCategory($_POST['CategoryName']);
+
+    header('location:index.php?addp=' . ($retval ? 'true' : 'false')); // return to the homepage and place result.
+    die(); // we're done here. 
+}
+
 if(isset($_POST['MakeCSV'])){
     // more complicated, we'll need to come up with something. 
 
