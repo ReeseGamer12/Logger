@@ -22,7 +22,6 @@ class manager{
         
         // create the SQL object. 
         $this->sql = new sqlControl();
-        error_log("loaded class manager");
 
     }
 
@@ -115,7 +114,7 @@ class manager{
 
     function getTextLimit($id){ // RETURN INT OR FALSE
         // get the text limit per ID. 
-        if($id > 1){
+        if($id != ''){
            
             if($this->sql->sqlCommand("SELECT CharacterLimit FROM Platforms WHERE ID = :id", array(":id" => $id), true) ){
                 $ret = $this->sql->returnResults();
@@ -123,7 +122,7 @@ class manager{
                 return $ret['CharacterLimit'];
             }
         }
-        
+
         return false;
     }
 

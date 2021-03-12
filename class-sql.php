@@ -23,8 +23,6 @@ class sqlControl {
 	function __construct(){
 		// load the SQL system
 		global $sqlCFG;
-		
-		error_log("loaded class manager");
 
 		try {  
 			$this->dbh = new PDO('mysql:host=localhost;dbname=' . $sqlCFG['db'], $sqlCFG['user'], $sqlCFG['pass']);

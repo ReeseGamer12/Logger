@@ -15,9 +15,22 @@ if(empty($_POST)){
 
 require_once("config.php");
 
-/*if(isset($_POST[''])){
+if(isset($_POST['requesting'])){
+    if($_POST['requesting'] == 'maxTextLength'){
+        // return the max text length, echoed as a json string.
+        $manager = new manager();
 
-}*/
+        if($_POST['Platform'] == -1){
+            $max = 9999;
+        } else {
+            $max = $manager->getTextLimit($_POST['Platform']);
+        }
+        
+        echo json_encode( array( 'Limit' => $max ) );
+        die(); // max one call. 
+    }
+    
+}
 
 
 
