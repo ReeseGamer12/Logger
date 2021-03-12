@@ -61,6 +61,50 @@ class manager{
         return false; // if somehow we don't return. This should never fire. 
     }
 
+    function getPlatforms(){ // RETURN ARRAY(K->V) OR FALSE
+        // return the list of platforms as an array
+        
+        if($this->sql->sqlCommand("SELECT ID, PlatformName FROM Platforms", array(), true) ){
+
+            $res = $this->sql->returnAllResults();
+
+            $retval = array();
+
+            foreach ($res as $r){
+                $retval[$r['ID']] = $r['PlatformName'];
+            }
+
+            if(count($retval) > 0){
+                return $retval;
+            }
+        }
+
+        // this failed, for some reason.
+        return false;
+    }
+
+    function getCategories(){ // RETURN ARRAY(K-V)
+        // return the list of categories as an array
+        
+        if($this->sql->sqlCommand("SELECT ID, CategoryName FROM Category", array(), true) ){
+
+            $res = $this->sql->returnAllResults();
+
+            $retval = array();
+
+            foreach ($res as $r){
+                $retval[$r['ID']] = $r['CategoryName'];
+            }
+
+            if(count($retval) > 0){
+                return $retval;
+            }
+        }
+
+        // this failed, for some reason.
+        return false;
+    }
+
     function exportCSV($plaftorm, $dateStart = false, $dateEnd = false){ // RETURN CSV CONTENT as JSON
 
 

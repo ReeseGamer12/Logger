@@ -2,6 +2,8 @@
 
 require_once("config.php");
 
+$manager = new manager();
+
 ?>
 <!doctype html>
 <html>
@@ -14,13 +16,25 @@ require_once("config.php");
             <label for="Platform">Platform</label> <select name="Platform" id="Platform">
                 <option value="-1">- Select -</option>
                 <?php 
-                    // we'll have to get the platforms here. 
+                    // we'll have to get the platforms here.
+                    $val = $manager->getPlatforms();
+
+                    foreach($val as $k => $v){
+                        echo '<option value="' . $k . '">' . $v . '</option>';
+                    }
+
                 ?>
             </select><br />
             <label for="Category">Category</label> <select name="Category" id="Category">
                 <option value="-1">- Select -</option>
                 <?php 
                     // we'll have to get the platforms here. 
+                    $val = $manager->getCategories();
+
+                    foreach($val as $k => $v){
+                        echo '<option value="' . $k . '">' . $v . '</option>';
+                    }
+
                 ?>
             </select><br />
             
@@ -84,6 +98,9 @@ require_once("config.php");
             <label for="RepeatMessage">Set Up Message Repeat?</label> <input name="RepeatMessage" id="RepeatMessage" type="checkbox" /><br />
             <label for="RepeatDays">Days Between Repeat</label> <input name="RepeatDays" id="RepeatDays" type="text" /><br />
             <label for="RepeatCount">Repeat Count</label> <input name="RepeatCount" id="RepeatCount" type="text" /><br />
+            
+            <div class="imagefields"></div>
+            <a href="#" id="addImageField">Add Image</a><br />
             <input type="submit" name="AddLine" />
         </form>
 
