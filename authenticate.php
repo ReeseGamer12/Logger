@@ -26,7 +26,7 @@ if(isset($_POST['AddLine'])){
         $datetime = false;
     }
 
-    if(isset($_FILES['Image'])){
+    if(isset($_FILES['Image']) && $_FILES['Image']['name'][0] != '') {
         $image = $_FILES['Image'];
     } else {
         $image = false;
@@ -39,7 +39,7 @@ if(isset($_POST['AddLine'])){
             $_POST['Category'], 
             $_POST['Message'], 
             $image, // images go here.  
-            ($_POST['Priority'] != '' ? $_POST['Priority'] : 0), 
+            ($_POST['Priority'] != '' ? $_POST['Priority'] : 1), 
             $datetime, 
             $repeat, 
             ($_POST['RepeatDays'] != '' ? $_POST['RepeatDays'] : 0), 

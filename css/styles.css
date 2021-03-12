@@ -10,3 +10,64 @@
 #repeater { 
     display: none;
 }
+
+.error {
+    display: none;
+    color: #f00;
+    font-style: italic;
+}
+
+#content {
+    margin: 0 auto;
+    width: 750px;
+}
+
+label{ 
+    width: 300px;
+    padding: 10px 5px;
+    display: inline-block;
+}
+
+input{
+    width: 400px;
+    padding: 10px 5px;
+    display: inline-block;
+    border: 1px solid #666;
+    font-size: 14px;
+}
+
+input[type="submit"]{
+    margin-left: 315px;
+    width: 412px;
+    padding: 10px 0;
+    font-size: 20px;
+    background-color: #666;
+    color: #fff;
+    
+}
+
+input[type="submit"]:hover{
+    
+    background-color: #000;
+}
+
+textarea{
+    width: 400px;
+    border: 1px solid #666;
+    padding: 10px 5px;
+    height: 80px;
+    font-size: 12pt;
+}
+
+select{
+    width: 410px;
+    border: 1px solid #666;
+    padding: 10px 5px;
+    height: 35px;
+    font-size: 14px;
+    margin-bottom: 10px;
+}
+
+#datetime select {
+    width: 97px;
+}

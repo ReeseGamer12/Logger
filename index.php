@@ -16,7 +16,7 @@ $manager = new manager();
         <script src="js/scripts.js"></script>
     </head>
     <body>
-
+        <div id="content">
         <form action="authenticate.php" method="POST" enctype="multipart/form-data" id="messageform">
             <label for="Platform">Platform</label> <select name="Platform" id="Platform">
                 <option value="-1">- Select -</option>
@@ -29,7 +29,7 @@ $manager = new manager();
                     }
 
                 ?>
-            </select><br />
+            </select><span id="perr" class="error">Platform Required.</span><br />
             <label for="Category">Category</label> <select name="Category" id="Category">
                 <option value="-1">- Select -</option>
                 <?php 
@@ -41,9 +41,9 @@ $manager = new manager();
                     }
 
                 ?>
-            </select><br />
+            </select><span id="cerr" class="error">Category Required.</span><br />
             
-            <label for="Message">Message</label> <textarea name="Message" id="Message"></textarea><br />
+            <label for="Message">Message</label> <textarea name="Message" id="Message"></textarea><span id="merr" class="error">Message Required.</span><span id="merrmax" class="error">Message Too Long.</span><br />
             <label for="UseDateTime">Use Specific date/time?</label> <input name="UseDateTime" id="UseDateTime" type="checkbox" /><br />
             <div id="datetime">
             <label>Date & Time</label> 
@@ -94,6 +94,11 @@ $manager = new manager();
                             }
                         }
                         
+                        if($i == 0) $h12time = '12:00 AM';
+                        if($i == 1) $h12time = '12:30 AM';
+                        if($i == 24) $h12time = '12:00 PM';
+                        if($i == 25) $h12time = '12:30 PM';
+
                         echo '<option value="' . $h24time . '">' . $h12time . '</option>';
                     }
                 ?>
@@ -107,7 +112,7 @@ $manager = new manager();
             <label for="RepeatCount">Repeat Count</label> <input name="RepeatCount" id="RepeatCount" type="text" /><br />
             </div>
             <label for="Image">Images</label><input type="file" name="Image[]" id="Image" multiple="multiple" /><br />
-            <input type="submit" name="AddLine" />
+            <input type="submit" name="AddLine" id="AddLine" />
         </form>
 
         <h3>Add Platform</h3>
@@ -129,5 +134,11 @@ $manager = new manager();
 
         <p><em>To Be Built</em></p>
 
+        <form action="authenticate.php" method="POST" enctype="multipart/form-data">
+            <label for="DaysToCreate">Days To Create</label> <input name="DaysToCreate" id="DaysToCreate" value="28" type="text" /><br />
+            <input type="submit" name="CreateExportCSV" />
+        </form>
+
+        </div>
     </body>
 </html>

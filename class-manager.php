@@ -48,58 +48,78 @@ class manager{
                 return false;
             }
 
+        // last insert number for images, if any. 
+        $InsertNo = $this->sql->lastInsert(); 
+
         // insert the images 
         if($images == false){
             return true;
         } else {
             // there are images to upload. 
-           // foreach($images as $i){
-                // move the image file to dedicated image folder. 
+            
+            $count = count($images['name']); // get number of images uploaded. 
+            
+            for($i = 0; $i < $count; $i++){
+                $errors= array();
+
+                $file_name = $images['name'][$i];
+                $file_size = $images['size'][$i];
+                $file_tmp =  $images['tmp_name'][$i];
+                $file_type = $images['type'][$i];
+
+                // since names can ".", we need to remove the extension and recombine the rest. 
+                $trueName = explode('.',$images['name'][$i]);
+                $file_ext=strtolower(array_pop($trueName));
                 
-           // }
-             
+                $file_nameOnly = implode ('.', $trueName);
 
-           /*$link= $_POST['Image'][0];
-            $destdir = '/uploads';
-            $img=file_get_contents($link);
-            file_put_contents($destdir.substr($link,strrpos($link,'/')),$img);
-            */
-            $errors= array();
+                $extensions= array("jpeg","jpg","png", "gif");
+                
+                if(in_array($file_ext,$extensions)=== false){
+                
+                    $errors[]="extension not allowed. JPG, PNG, or GIF only";
+                
+                }
+                    
+                if($file_size > 2097152){
+                
+                    $errors[]='File size must be less than 2 MB';
+                
+                }
+                
+                if(empty($errors)==true){
+                    
+                    $date = new DateTime();
+                    
+                    $filepo = "uploads/" . $file_nameOnly . '_' . $date->getTimestamp() . '.' . $file_ext;
 
-            $file_name = $images['name'][0];
-            $file_size = $images['size'][0];
-            $file_tmp =  $images['tmp_name'][0];
-            $file_type = $images['type'][0];
-            $file_ext=strtolower(end(explode('.',$images['name'][0])));
-            
-            $extensions= array("jpeg","jpg","png", "gif");
-            
+                    move_uploaded_file( $file_tmp, $filepo);
+                    
+                    // once file is uploaded, we can next move to inserting the image line in DB
 
-            var_dump($images);
-            
+                    //$InsertNo
+                    $this->sql->sqlCommand("INSERT INTO Image (MessageID, Image) VALUES (:id, :img)", 
+                        array(
+                            ':id' => $InsertNo,
+                            ':img' => $filepo
+                        ), true);
 
-            if(in_array($file_ext,$extensions)=== false){
-                $errors[]="extension not allowed. JPG, PNG, or GIF only";
-             }
-             
-             if($file_size > 2097152){
-                $errors[]='File size must be less than 2 MB';
-             }
-             
-             if(empty($errors)==true){
-                move_uploaded_file($file_tmp,"uploads/".$file_name);
-                echo "Success ";
-             }else{
-                print_r($errors);
-             }
-            
-            echo '<br />image upload was run';
-            die();
+                } else {
+                    error_log('Error: Failed to upload image: '. $images['name'][$i]);
+                    
+                    foreach($errors as $e){
+                    
+                        error_log($e);
+                    
+                    }
+                    // this failed, bail.
+                    return false;
+                }
+            }
+
+            return true;
         } 
         
-        
-
-
         return false;
     }
 
@@ -118,8 +138,6 @@ class manager{
             ), true); 
 
         return false; // if somehow we don't return. This should never fire. 
-
-
     }
 
     function addCategory($name){ // RETURN BOOL

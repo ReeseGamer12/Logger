@@ -35,10 +35,29 @@ $(document).ready( function() {
         });
     });
 
-    $("#addImageField").click( function() {
-        // on click add a file option. 
-        $("#messageform").append('<input type="file" name="Image[]" /><br />');
+    $("#AddLine").click( function() {
+        // do site validation quickly. 
+        var count = 0;
+        if($("#Platform").val() == -1){
+            count++;
+            $("#perr").show();
+        }
+        if($("#Category").val() == -1){
+            count++;
+            $("#cerr").show();
+        }
+        if($("#Message").val() == ''){
+            count++;
+            $("#merr").show();
+        }
 
-        return false;
+        if($("#Message").val().length > maxPostLength){
+            count++;
+            $("#merrmax").show();
+        }
+
+        if(count > 0){ 
+            return false;
+        }
     });
 });
