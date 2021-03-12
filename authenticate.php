@@ -26,18 +26,24 @@ if(isset($_POST['AddLine'])){
         $datetime = false;
     }
 
-    $repeat = ((isset($_POST['RepeatMessage']) && $_POST['RepeatMessage'] == 'on') ? true : false);
+    if(isset($_FILES['Image'])){
+        $image = $_FILES['Image'];
+    } else {
+        $image = false;
+    }
+
+    $repeat = ((isset($_POST['RepeatMessage']) && $_POST['RepeatMessage'] == 'on') ? 1 : 0);
 
     $retval = $manager->insertLine(
             $_POST['Platform'], 
             $_POST['Category'], 
             $_POST['Message'], 
-            false, // images go here.  
-            $_POST['Priority'], 
+            $image, // images go here.  
+            ($_POST['Priority'] != '' ? $_POST['Priority'] : 0), 
             $datetime, 
             $repeat, 
-            $_POST['RepeatDays'], 
-            $_POST['RepeatCount']
+            ($_POST['RepeatDays'] != '' ? $_POST['RepeatDays'] : 0), 
+            ($_POST['RepeatCount'] != '' ? $_POST['RepeatCount'] : 0)
         );
 
 

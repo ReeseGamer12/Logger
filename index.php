@@ -17,7 +17,7 @@ $manager = new manager();
     </head>
     <body>
 
-        <form action="authenticate.php" method="POST">
+        <form action="authenticate.php" method="POST" enctype="multipart/form-data" id="messageform">
             <label for="Platform">Platform</label> <select name="Platform" id="Platform">
                 <option value="-1">- Select -</option>
                 <?php 
@@ -106,13 +106,12 @@ $manager = new manager();
             <label for="RepeatDays">Days Between Repeat</label> <input name="RepeatDays" id="RepeatDays" type="text" /><br />
             <label for="RepeatCount">Repeat Count</label> <input name="RepeatCount" id="RepeatCount" type="text" /><br />
             </div>
-            <div class="imagefields"></div>
-            <a href="#" id="addImageField">Add Image</a><br />
+            <label for="Image">Images</label><input type="file" name="Image[]" id="Image" multiple="multiple" /><br />
             <input type="submit" name="AddLine" />
         </form>
 
         <h3>Add Platform</h3>
-        <form action="authenticate.php" method="POST">
+        <form action="authenticate.php" method="POST" enctype="multipart/form-data">
             <label for="PlatformName">Platform Name</label> <input name="PlatformName" id="PlatformName" type="text" /><br />
             <label for="APILink">API Link</label> <input name="APILink" id="APILink" type="text" /><br />
             <label for="RecycleLimit">Recycle Limit</label> <input name="RecycleLimit" id="RecycleLimit" type="text" /><br />
@@ -121,7 +120,7 @@ $manager = new manager();
         </form>
 
         <h3>Add Category</h3>
-        <form action="authenticate.php" method="POST">
+        <form action="authenticate.php" method="POST" enctype="multipart/form-data">
             <label for="CategoryName">Category Name</label> <input name="CategoryName" id="CategoryName" type="text" /><br />
             <input type="submit" name="AddCategory" />
         </form>

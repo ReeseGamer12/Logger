@@ -26,17 +26,18 @@ class manager{
     }
 
     function insertLine($platformID, $categoryID, $message, $images = false, $priority = 1, $DateTime = false, $repeat = false, $repeatDays = 0, $repeatTimes = 0){ // RETURN BOOL
-        if($message == '' || $plaformID == -1 || $categoryID == -1){
+        if($message == '' || $platformID == -1 || $categoryID == -1){
             // there is insufficient information. 
             return false;
         }
+        
 
         // insert the message. 
         if($this->sql->sqlCommand("INSERT INTO Message (PlatformID, CategoryID, DateTime, Message, Priority, RepeatBool, RepeatDays, RepeatTimes) VALUES (:PlatformID, :CategoryID, :DateTime, :Message, :Priority, :RepeatBool, :RepeatDays, :RepeatTimes)", 
             array(
                 ':PlatformID' => $platformID,
                 ':CategoryID' => $categoryID,
-                ':DateTime' => ($DateTime == false ? null : $DateTime),
+                ':DateTime' => ($DateTime == false ? '1000-01-01 00:00:00' : $DateTime),
                 ':Message' => $message,
                 ':Priority' => $priority,
                 ':RepeatBool' => $repeat,
@@ -50,10 +51,53 @@ class manager{
         // insert the images 
         if($images == false){
             return true;
+        } else {
+            // there are images to upload. 
+           // foreach($images as $i){
+                // move the image file to dedicated image folder. 
+                
+           // }
+             
+
+           /*$link= $_POST['Image'][0];
+            $destdir = '/uploads';
+            $img=file_get_contents($link);
+            file_put_contents($destdir.substr($link,strrpos($link,'/')),$img);
+            */
+            $errors= array();
+
+            $file_name = $images['name'][0];
+            $file_size = $images['size'][0];
+            $file_tmp =  $images['tmp_name'][0];
+            $file_type = $images['type'][0];
+            $file_ext=strtolower(end(explode('.',$images['name'][0])));
+            
+            $extensions= array("jpeg","jpg","png", "gif");
+            
+
+            var_dump($images);
+            
+
+            if(in_array($file_ext,$extensions)=== false){
+                $errors[]="extension not allowed. JPG, PNG, or GIF only";
+             }
+             
+             if($file_size > 2097152){
+                $errors[]='File size must be less than 2 MB';
+             }
+             
+             if(empty($errors)==true){
+                move_uploaded_file($file_tmp,"uploads/".$file_name);
+                echo "Success ";
+             }else{
+                print_r($errors);
+             }
+            
+            echo '<br />image upload was run';
+            die();
         } 
         
-        return true;
-        // TO BE COMPLETED. --------------------------------------!!
+        
 
 
         return false;

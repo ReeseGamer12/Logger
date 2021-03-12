@@ -37,7 +37,7 @@ $(document).ready( function() {
 
     $("#addImageField").click( function() {
         // on click add a file option. 
-        $(".imagefields").append('<input type="file" name="Image[]" /><br />');
+        $("#messageform").append('<input type="file" name="Image[]" /><br />');
 
         return false;
     });
