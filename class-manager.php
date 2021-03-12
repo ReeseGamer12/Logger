@@ -26,8 +26,38 @@ class manager{
 
     }
 
-    function insertLine(){ // RETURN BOOL
+    function insertLine($platformID, $categoryID, $message, $images = false, $priority = 1, $DateTime = false, $repeat = false, $repeatDays = 0, $repeatTimes = 0){ // RETURN BOOL
+        if($message == '' || $plaformID == -1 || $categoryID == -1){
+            // there is insufficient information. 
+            return false;
+        }
+
+        // insert the message. 
+        if($this->sql->sqlCommand("INSERT INTO Message (PlatformID, CategoryID, DateTime, Message, Priority, RepeatBool, RepeatDays, RepeatTimes) VALUES (:PlatformID, :CategoryID, :DateTime, :Message, :Priority, :RepeatBool, :RepeatDays, :RepeatTimes)", 
+            array(
+                ':PlatformID' => $platformID,
+                ':CategoryID' => $categoryID,
+                ':DateTime' => ($DateTime == false ? null : $DateTime),
+                ':Message' => $message,
+                ':Priority' => $priority,
+                ':RepeatBool' => $repeat,
+                ':RepeatDays' => $repeatDays,
+                ':RepeatTimes' => $repeatTimes
+            ), true) == false ){
+                // insert failed, abort
+                return false;
+            }
+
+        // insert the images 
+        if($images == false){
+            return true;
+        } 
         
+        return true;
+        // TO BE COMPLETED. --------------------------------------!!
+
+
+        return false;
     }
 
     function addPlatform($name, $apilink, $recyclelimit, $charlimit){ // RETURN BOOL

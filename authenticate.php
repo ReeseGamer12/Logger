@@ -17,8 +17,32 @@ require_once("config.php");
 
 if(isset($_POST['AddLine'])){
     // this is a line to add.
+    $manager = new manager();
 
-    header('location:index.php?s=TRUE'); // return to the homepage and place result.
+    if(isset($_POST['UseDateTime']) && $_POST['UseDateTime'] == 'on'){
+        // this is a used datetime. 
+        $datetime = $_POST['DateYear'] . '-' . str_pad($_POST['DateMonth'], 2, "0", STR_PAD_LEFT) . '-' . str_pad($_POST['DateDay'], 2, "0", STR_PAD_LEFT) . ' ' . $_POST['DateTime'];
+    } else {
+        $datetime = false;
+    }
+
+    $repeat = ((isset($_POST['RepeatMessage']) && $_POST['RepeatMessage'] == 'on') ? true : false);
+
+    $retval = $manager->insertLine(
+            $_POST['Platform'], 
+            $_POST['Category'], 
+            $_POST['Message'], 
+            false, // images go here.  
+            $_POST['Priority'], 
+            $datetime, 
+            $repeat, 
+            $_POST['RepeatDays'], 
+            $_POST['RepeatCount']
+        );
+
+
+
+    header('location:index.php?addm=' . ($retval ? 'true' : 'false')); // return to the homepage and place result.
     die(); // we're done here. 
 }
 
