@@ -9,6 +9,8 @@ $manager = new manager();
 <html>
     <head>
         <title>Social Media Logger</title>
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+        <script src="js/scripts.js"></script>
     </head>
     <body>
 

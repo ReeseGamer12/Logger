@@ -1,0 +1,11 @@
+/*
+
+Jquery/javascript for internal order application. 
+
+*/
+
+$(document).ready( function() {
+
+
+    
+});
