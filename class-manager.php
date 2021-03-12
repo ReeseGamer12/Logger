@@ -113,6 +113,20 @@ class manager{
         return false;
     }
 
+    function getTextLimit($id){ // RETURN INT OR FALSE
+        // get the text limit per ID. 
+        if($id > 1){
+           
+            if($this->sql->sqlCommand("SELECT CharacterLimit FROM Platforms WHERE ID = :id", array(":id" => $id), true) ){
+                $ret = $this->sql->returnResults();
+
+                return $ret['CharacterLimit'];
+            }
+        }
+        
+        return false;
+    }
+
     function getCategories(){ // RETURN ARRAY(K-V)
         // return the list of categories as an array
         

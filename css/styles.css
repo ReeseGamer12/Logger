@@ -1,0 +1,12 @@
+/**********************\
+* Local styling for    *
+* Social App.          *
+\**********************/
+
+#datetime { 
+    display: none;
+}
+
+#repeater { 
+    display: none;
+}

@@ -9,6 +9,9 @@ $manager = new manager();
 <html>
     <head>
         <title>Social Media Logger</title>
+
+        <link rel="stylesheet" href="css/styles.css">
+
         <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
         <script src="js/scripts.js"></script>
     </head>
@@ -42,6 +45,7 @@ $manager = new manager();
             
             <label for="Message">Message</label> <textarea name="Message" id="Message"></textarea><br />
             <label for="UseDateTime">Use Specific date/time?</label> <input name="UseDateTime" id="UseDateTime" type="checkbox" /><br />
+            <div id="datetime">
             <label>Date & Time</label> 
             <select name="DateMonth">
                 <option value="1">January</option>
@@ -94,13 +98,14 @@ $manager = new manager();
                     }
                 ?>
             </select>
-            <br />
+            </div>
             
             <label for="Priority">Priority (1-100)</label> <input name="Priority" id="Priority" type="text" /><br />
             <label for="RepeatMessage">Set Up Message Repeat?</label> <input name="RepeatMessage" id="RepeatMessage" type="checkbox" /><br />
+            <div id="repeater">
             <label for="RepeatDays">Days Between Repeat</label> <input name="RepeatDays" id="RepeatDays" type="text" /><br />
             <label for="RepeatCount">Repeat Count</label> <input name="RepeatCount" id="RepeatCount" type="text" /><br />
-            
+            </div>
             <div class="imagefields"></div>
             <a href="#" id="addImageField">Add Image</a><br />
             <input type="submit" name="AddLine" />
