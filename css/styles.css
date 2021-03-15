@@ -36,6 +36,18 @@ input{
     font-size: 14px;
 }
 
+#PlaftormChecks input{  
+    width: 20px;
+}
+
+#PlaftormChecks label{
+    width: 210px;
+}
+
+#PlaftormChecks div {
+    display: inline-block;
+}
+
 input[type="submit"]{
     margin-left: 315px;
     width: 412px;
@@ -70,4 +82,9 @@ select{
 
 #datetime select {
     width: 97px;
+}
+
+
+#datetimecsv select{
+    width: 135px;
 }

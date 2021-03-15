@@ -140,18 +140,31 @@ class manager{
         return false; // if somehow we don't return. This should never fire. 
     }
 
-    function addCategory($name){ // RETURN BOOL
+    function addCategory($name, $frequency, $platforms){ // RETURN BOOL
         if($name == ''){
             // there is nothing to use 
             return false;
         }
 
         // add this line to the DB. 
-        return $this->sql->sqlCommand("INSERT INTO Category ( CategoryName ) VALUES (:cat)", array(':cat' => $name), true); 
+        if( $this->sql->sqlCommand("INSERT INTO Category ( CategoryName, Frequency ) VALUES (:cat, :freq)", array(':cat' => $name, ':freq' => $frequency), true) == true){
+            // if the insert worked, we'll next add all of the platform associations. 
+
+            $id = $this->sql->lastInsert(); // last inserted ID. 
+
+            foreach($platforms as $p){
+                $this->sql->sqlCommand("INSERT INTO PCAssociations ( PlatformID, CategoryID ) VALUES (:plat, :cat)", array(':plat' => $p, ':cat' => $id), true);
+            }
+            
+            return true;
+        }
+
+
 
         return false; // if somehow we don't return. This should never fire. 
     }
 
+    
     function getPlatforms(){ // RETURN ARRAY(K->V) OR FALSE
         // return the list of platforms as an array
         
@@ -210,10 +223,23 @@ class manager{
         return false;
     }
 
-    function exportCSV($plaftorm, $dateStart = false, $dateEnd = false){ // RETURN CSV CONTENT as JSON
+    function exportCSV($plaftorm, $dateStart = false, $days = 28){ // RETURN BOOL
+        // create a folder with the images and a CSV of 
+        
+        // timestamp is used to create a unique upload file name. This is intended to be deleted after each creation and upload. 
+        // images are copied in, so this could take a lot of space. 
+        $date = new DateTime();
+
+        if(mkdir("uploads/Export-" . $date->getTimestamp() . "/", 0777, true)){ // NAME NEEDS TO CHANGE
+            // once the folder is made, we'll need to create the CSV.
+            // while generating the CSV, also copy over images
+            // output the CSV to the folder. 
+            
+            // we're done, folder is complete! 
+            return true;
+        }
 
 
-    }
-
-    
+        return false; // somehow failed. 
+    }    
 }

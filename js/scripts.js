@@ -8,6 +8,7 @@ $(document).ready( function() {
 
     var maxPostLength = -1; // default argument will be overwritten
 
+
     $("#UseDateTime").click( function() {
         $("#datetime").toggle();
     });
@@ -16,29 +17,48 @@ $(document).ready( function() {
         $("#repeater").toggle();
     });
 
-    $("#Platform").change( function() {
+    
+    $(".Platform").change( function() {
         // on platform change, get the current max text and return,
         // store the value in a hidden variable. 
+        
+        var sendArr = '';
+
+        $(".Platform").each( function() {
+
+            var thisObj = $(this);
+            
+            if(thisObj.is(":checked")){
+                
+                sendArr = sendArr + '|' + thisObj.val();
+                
+            }
+        });
+
         $.ajax({
             method: "POST",
             url: "ajax.php",
             data: { 
                 requesting: "maxTextLength", 
-                Platform: $("#Platform").val()
+                Platform: sendArr
             }
         }).done(function( msg ) {
-            //alert( msg );
             
             var obj = $.parseJSON(msg);
+            
+            maxPostLength = parseInt(obj.Limit);
+                
+            $("#lim").html(" Max: " + maxPostLength);
 
-            maxPostLength = obj.Limit;
         });
+        
     });
+    
 
     $("#AddLine").click( function() {
         // do site validation quickly. 
         var count = 0;
-        if($("#Platform").val() == -1){
+        if(!platformCount()){
             count++;
             $("#perr").show();
         }
@@ -61,3 +81,20 @@ $(document).ready( function() {
         }
     });
 });
+
+function platformCount(){
+
+    var ret = false;
+
+    $(".Platform").each( function() {
+
+        if($(this).is(":checked")){
+            
+            if(ret == false){
+                ret = true;
+            }
+        }
+    });
+
+    return ret;
+}
