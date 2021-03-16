@@ -95,7 +95,7 @@ if(isset($_POST['MakeCSV'])){
     $manager = new manager();
     
     //exportCSV($plaftorm, $dateStart = false, $days = 28){
-    $retval = $manager->exportCSV($_POST['Platform'], date("m-d-Y", mktime(0, 0, 0, $_POST['DateMonth'], $_POST['DateDay'], $_POST['DateYear'])), $_POST['DaysToCreate']);
+    $retval = $manager->exportCSV($_POST['Platform'], mktime(0, 0, 0, $_POST['DateMonth'], $_POST['DateDay'], $_POST['DateYear']), $_POST['DaysToCreate']);
 
     header('location:index.php?export=' . ($retval ? 'true' : 'false')); // return to the homepage and place result.
     die(); // we're done here. 

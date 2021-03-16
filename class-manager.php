@@ -17,6 +17,7 @@ if(count(get_included_files()) ==1){
 class manager{
 
     private $sql;
+    private $categories; // used for export. 
 
     function __construct(){ // RETURN VOID
         
@@ -224,7 +225,7 @@ class manager{
     function getCategories(){ // RETURN ARRAY(K-V)
         // return the list of categories as an array
         
-        if($this->sql->sqlCommand("SELECT ID, CategoryName FROM Category", array(), false) ){
+        if($this->sql->sqlCommand("SELECT ID, CategoryName, Frequency FROM Category", array(), false) ){
 
             $res = $this->sql->returnAllResults();
 
@@ -232,6 +233,7 @@ class manager{
 
             foreach ($res as $r){
                 $retval[$r['ID']] = $r['CategoryName'];
+                $this->categories[$r['CategoryName']] = $r['Frequency'];
             }
 
             if(count($retval) > 0){
@@ -243,17 +245,86 @@ class manager{
         return false;
     }
 
-    function exportCSV($plaftorm, $dateStart = false, $days = 28){ // RETURN BOOL
+    function getTimesForPlatform($platform){ // RETURN ARRAY(V) or FALSE
+        // return a list of time objects for the given platform. 
+
+        if($this->sql->sqlCommand("SELECT PlatformTime FROM PlatformTime WHERE PlatformID = :id", array(':id' => $platform), false) ){
+
+            $res = $this->sql->returnAllResults();
+
+            $retval = array();
+
+            foreach ($res as $r){
+                $retval[] = $r['PlatformTime'];
+            }
+
+            if(count($retval) > 0){
+                return $retval;
+            }
+            
+            return false;
+        }
+
+        // this failed, for some reason.
+        return false;
+
+    }
+
+    function exportCSV($platform, $dateStart = false, $days = 28){ // RETURN BOOL
         // create a folder with the images and a CSV of 
-        
+
         // timestamp is used to create a unique upload file name. This is intended to be deleted after each creation and upload. 
         // images are copied in, so this could take a lot of space. 
         $date = new DateTime();
+        $this->getCategories();
+        
         if(mkdir("uploads/Export-" . $date->getTimestamp() . "/", 0777, true)){ // NAME NEEDS TO CHANGE
             // once the folder is made, we'll need to create the CSV.
             // while generating the CSV, also copy over images
             // output the CSV to the folder. 
             
+            if(!$dateStart){ $dateStart = time(); } // set the date to day if not given. 
+
+            // first create a list of dates that need to be referenced 
+            $daysToCreate = array();
+
+            for($i = 0; $i < $days; $i++){
+                // we'll manually iterate i. 
+                //echo date('w',  . '<br />';
+
+                $nextDate = $dateStart + 24*60*60*$i;
+                $dayOfWeek = date('w', $nextDate);
+
+                if($dayOfWeek != 0 && $dayOfWeek != 6){
+                    // valid day to create data for. 
+                    $daysToCreate[] = $nextDate;
+                }
+            }
+
+            // now that we have a list of days, we'll need to get the list of times. 
+            $times = $this->getTimesForPlatform($platform);
+        
+            // we now have days and times to work with. To proceed, we'll need to 
+            // create a loop to run through the days.
+
+            //var_dump($daysToCreate);
+
+            foreach($daysToCreate as $day){
+                // for each day, cycle through the times and pull message. 
+                foreach($times as $time){
+                    $message = $this->getMessage($platform, $day, $time);
+                    
+                    var_dump($message);
+                    
+                }
+            }
+
+
+
+
+            die ();// WE'll clear this later so we can see results. 
+
+
             // we're done, folder is complete! 
             return true;
         }
@@ -261,4 +332,234 @@ class manager{
 
         return false; // somehow failed. 
     }    
+
+    private function getMessage($platform, $day, $time){ // RETURN ARRAY(K-V)
+        
+        $lastSendNo = $this->getLastSend($platform);
+        $noSchedule = '1000-01-01 00:00:00'; // for determining unscheduled messages.
+        // get the message information and return array.
+
+        // 1: check for any message on day at time, check for all, set up highest priority. 
+        $this->sql->sqlCommand("SELECT * FROM Message 
+                    WHERE PlatformID = :id
+                    AND SendNo = -1
+                    AND DateTime = :datetime
+                    ORDER BY Priority DESC", 
+            array(
+                ':id' => $platform,
+                ':datetime' => gmdate("Y-m-d", $day) . ' ' . str_pad($time, 8, '0', STR_PAD_LEFT)
+            ), true);
+
+        $ret = $this->sql->returnAllResults();
+        
+        if(count($ret) > 0){
+            // there is at least 1 result.
+            // 1b: if other messages are at the same priority, we'll need to push one back by a day. Do so for later install. 
+            // 1c: if message is a repeat, schedule this one then reschedule as per repeat.
+            // TO DO
+            
+            echo '<br />area 1<br />';
+
+            // update the messsage in the DB. 
+            $this->updateMessage($ret[0]['ID']);
+
+            if(count($ret) > 1){
+                // for each, delayMessage($id)
+                for($i = 1; $i < count($ret); $i++){
+                    // for each message, apply the delay.
+                    $this->delayMessage($ret[$i]['ID']);
+                }
+            }
+            
+            return $ret[0]; 
+        } else {
+
+            // 2: if no message, next check to find all messages that haven't been sent. we'll pick from those. 
+            // 2b: check messages for the last time sent, if above the "resend" number, we can send that category again. 
+            // 2c: if none are above that threshhold, check 3
+
+            $this->sql->sqlCommand("SELECT * FROM Message AS M
+                    WHERE M.PlatformID = :id
+                    AND M.SendNo = -1
+                    AND M.DateTime = :datetime
+                    AND (:lastSend - 
+                        (SELECT SendNo FROM Message AS E 
+                            WHERE E.PlatformID = :id 
+                            AND E.CategoryID = M.CategoryID 
+                            ORDER BY SendNo DESC LIMIT 1) >=
+                        (SELECT Frequency FROM Category 
+                            WHERE ID = M.CategoryID LIMIT 1) OR
+                        (SELECT SendNo FROM Message as E 
+                            WHERE E.PlatformID = :id 
+                            AND E.CategoryID = M.CategoryID 
+                            ORDER BY SendNo DESC LIMIT 1) <= 0)               
+                    ORDER BY Priority DESC", 
+            array(
+                ':id' => $platform,
+                ':datetime' => $noSchedule,
+                ':lastSend' => $lastSendNo
+            ), true);
+
+            $ret = $this->sql->returnAllResults();
+        
+            if(count($ret) > 0){
+                // there is at least 1 result.
+                
+                echo '<br />area 2<br />';
+            } else {
+
+                // 3: if all messages are already sent once or in unusable categories, check for recycled messages.
+        
+                $this->sql->sqlCommand("SELECT * FROM Message as M
+                        WHERE M.PlatformID = :id
+                        AND M.DateTime = :datetime
+                        AND (:lastSend - 
+                            (SELECT SendNo FROM Message as E 
+                                WHERE E.PlatformID = :id 
+                                AND E.CategoryID = M.CategoryID 
+                                ORDER BY SendNo DESC LIMIT 1) >=
+                            (SELECT Frequency FROM Category 
+                                WHERE ID = M.CategoryID LIMIT 1) OR
+                            (SELECT SendNo FROM Message as E 
+                                WHERE E.PlatformID = :id 
+                                AND E.CategoryID = M.CategoryID 
+                                ORDER BY SendNo DESC LIMIT 1) <= 0)               
+                        ORDER BY Priority DESC", 
+                array(
+                    ':id' => $platform,
+                    ':datetime' => $noSchedule,
+                    ':lastSend' => $lastSendNo
+                ), true);
+
+                $ret = $this->sql->returnAllResults();
+
+                if(count($ret) > 0){
+                    // there is at least 1 result.
+                    
+                    echo '<br />area 3<br />';
+                } else {
+
+                    // 4: if no recycled messages available, go to 2 (then 3) but find the category with the least "wait" time for next message,
+                    // 4b: return that message. 
+                    
+                    $this->sql->sqlCommand("SELECT * FROM Message as M
+                            WHERE M.PlatformID = :id
+                            AND M.SendNo = -1
+                            AND M.DateTime = :datetime               
+                            ORDER BY Priority DESC, 
+                            :lastSend - 
+                            (SELECT SendNo FROM Message as E 
+                                WHERE E.PlatformID = :id 
+                                AND E.CategoryID = M.CategoryID 
+                                ORDER BY SendNo DESC LIMIT 1) ASC", 
+                    array(
+                        ':id' => $platform,
+                        ':datetime' => $noSchedule
+                    ), true);
+                    
+                    $ret = $this->sql->returnAllResults();
+
+                    if(count($ret) > 0){
+                        // there is at least 1 result.
+                        
+                        echo '<br />area 4<br />';
+                    } else {
+                        // 5: really, any message at this point is OK. 
+
+                        $this->sql->sqlCommand("SELECT * FROM Message as M
+                                WHERE M.PlatformID = :id
+                                AND M.DateTime = :datetime             
+                                ORDER BY Priority DESC, 
+                            :lastSend - 
+                            (SELECT SendNo FROM Message as E 
+                                WHERE E.PlatformID = :id 
+                                AND E.CategoryID = M.CategoryID 
+                                ORDER BY SendNo DESC LIMIT 1) ASC", 
+                        array(
+                            ':id' => $platform,
+                            ':datetime' => $noSchedule
+                        ), true);
+
+                        $ret = $this->sql->returnAllResults();
+
+                        if(count($ret) > 0){
+                            // there is at least 1 result.
+                            // 1b: if other messages are at the same priority, we'll need to push one back by a day. Do so for later install. 
+                            // 1c: if message is a repeat, schedule this one then reschedule as per repeat.
+                            // TO DO
+                            
+                            echo '<br />area 5<br />';
+                        } 
+
+                        // there should ALWAYS be a message to send ideally. If nothing is valid through 4, return false and an error to user 
+                        // that messages do not exist and to ABORT process. 
+                        
+                    }
+                }
+            }
+        }
+
+        // take returned content, and from that choose a random one to be used, based on priority. 
+        // we'll eliminate everything below the highest priority before placing. 
+
+        $maxPriority = $ret[0]['Priority']; 
+
+        $newRet = array();
+        for($i = 0; $i < count($ret); $i++){
+            // for each message, check the priority. if less than MAX, remove from running. 
+            if($ret[$i]['Priority'] >= $maxPriority){
+                $newRet[] = $ret[$i]; // transfer the return for the next part.
+            }
+        }
+        $ret = '';
+
+        $pick = mt_rand(0, count($newRet) - 1);
+
+        $this->updateMessage($newRet[$pick]['ID']);
+
+        return $newRet[$pick];
+    }
+
+    private function getLastSend($platform){ // RETURN INT
+        // get the last send number
+        $this->sql->sqlCommand("SELECT SendNo FROM Message WHERE PlatformID = :id ORDER BY SendNo DESC LIMIT 1", 
+            array(':id' => $platform), false);
+
+        $res = $this->sql->returnResults();
+
+        return $res['SendNo'];
+    }
+
+    private function updateMessage($id, $lastsend, $datetime, $repeatbool, $repeattimes, $repeatdays){
+        // update the message to the newest send ID, as well as set the repeat date and count, if needed. 
+        
+        $cmd = "UPDATE Message SET SendNo = :sendNo";
+        $attsArr = array(':sendNo' => ($lastsend > -1 ? $lastsend + 1 : 1));
+        
+        if(repeatbool == 1){
+            // there is a repeat to occur. 
+            $newTime = strtotime($datetime) + 24*60*60*$repeatdays;
+            
+            // check time is not on a weekend =--------------------------------------!!
+
+            $cmd .= ", DateTime = :datetime";
+            $attsArr[':datetime'] = date("Y-m-d H:i:s", $newTime);
+
+            if($repeattimes <= 1){
+                // this will be the last one. ----------------------------------------!!
+            } else {
+                // just reduce by one. -----------------------------------------------!!
+            }
+
+        }
+        
+        $cmd .= " WHERE ID = :id";
+
+        //$this->sql->sqlCommand()
+    
+    }
+
+    private function delayMessage($id){
+        // set a message delay of 24 hours on the current timed message.
+    }
 }
