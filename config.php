@@ -18,3 +18,4 @@ $sqlCFG = array(
 
 require_once("class-sql.php");
 require_once("class-manager.php");
+require_once("functions.php");

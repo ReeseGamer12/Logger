@@ -43,7 +43,7 @@ class manager{
                 ':RepeatBool' => $repeat,
                 ':RepeatDays' => $repeatDays,
                 ':RepeatTimes' => $repeatTimes
-            ), true) == false ){
+            ), false) == false ){
                 // insert failed, abort
                 return false;
             }
@@ -102,7 +102,7 @@ class manager{
                         array(
                             ':id' => $InsertNo,
                             ':img' => $filepo
-                        ), true);
+                        ), false);
 
                 } else {
                     error_log('Error: Failed to upload image: '. $images['name'][$i]);
@@ -123,21 +123,41 @@ class manager{
         return false;
     }
 
-    function addPlatform($name, $apilink, $recyclelimit, $charlimit){ // RETURN BOOL
+    function addPlatform($name, $apilink, $recyclelimit, $charlimit, $category){ // RETURN BOOL
         if($name == ''){
             // there is nothing to use 
             return false;
         }
         
-        return $this->sql->sqlCommand("INSERT INTO Platforms (PlatformName, APILink, RecycleLimit, CharacterLimit) VALUES (:name, :api, :recyc, :char)", 
+        if( $this->sql->sqlCommand("INSERT INTO Platforms (PlatformName, APILink, RecycleLimit, CharacterLimit) VALUES (:name, :api, :recyc, :char)", 
             array(
                 ':name' => $name,
                 ':api' => $apilink,
                 ':recyc' => $recyclelimit,
                 ':char' => $charlimit,
-            ), true); 
+            ), false) ){
+
+                $id = $this->sql->lastInsert(); // last inserted ID. 
+
+                foreach($category as $c){
+                    $this->sql->sqlCommand("INSERT INTO PCAssociations ( PlatformID, CategoryID ) VALUES (:plat, :cat)", array(':plat' => $id, ':cat' => $c), false);
+                }
+
+                return true;
+            }
 
         return false; // if somehow we don't return. This should never fire. 
+    }
+
+    function addPlatformTime($platform, $time){ // RETURN BOOL
+        // add platform times for later export.
+
+        foreach($platform as $p){
+            if( !$this->sql->sqlCommand("INSERT INTO PlatformTime ( PlatformID, PlatformTime ) VALUES (:plat, :time)", array(':plat' => $p, ':time' => $time), true)){
+                return false;
+            }
+        }
+        return true;
     }
 
     function addCategory($name, $frequency, $platforms){ // RETURN BOOL
@@ -147,15 +167,15 @@ class manager{
         }
 
         // add this line to the DB. 
-        if( $this->sql->sqlCommand("INSERT INTO Category ( CategoryName, Frequency ) VALUES (:cat, :freq)", array(':cat' => $name, ':freq' => $frequency), true) == true){
+        if( $this->sql->sqlCommand("INSERT INTO Category ( CategoryName, Frequency ) VALUES (:cat, :freq)", array(':cat' => $name, ':freq' => $frequency), false) == true){
             // if the insert worked, we'll next add all of the platform associations. 
 
             $id = $this->sql->lastInsert(); // last inserted ID. 
 
             foreach($platforms as $p){
-                $this->sql->sqlCommand("INSERT INTO PCAssociations ( PlatformID, CategoryID ) VALUES (:plat, :cat)", array(':plat' => $p, ':cat' => $id), true);
+                $this->sql->sqlCommand("INSERT INTO PCAssociations ( PlatformID, CategoryID ) VALUES (:plat, :cat)", array(':plat' => $p, ':cat' => $id), false);
             }
-            
+
             return true;
         }
 
@@ -168,7 +188,7 @@ class manager{
     function getPlatforms(){ // RETURN ARRAY(K->V) OR FALSE
         // return the list of platforms as an array
         
-        if($this->sql->sqlCommand("SELECT ID, PlatformName FROM Platforms", array(), true) ){
+        if($this->sql->sqlCommand("SELECT ID, PlatformName FROM Platforms", array(), false) ){
 
             $res = $this->sql->returnAllResults();
 
@@ -191,7 +211,7 @@ class manager{
         // get the text limit per ID. 
         if($id != ''){
            
-            if($this->sql->sqlCommand("SELECT CharacterLimit FROM Platforms WHERE ID = :id", array(":id" => $id), true) ){
+            if($this->sql->sqlCommand("SELECT CharacterLimit FROM Platforms WHERE ID = :id", array(":id" => $id), false) ){
                 $ret = $this->sql->returnResults();
 
                 return $ret['CharacterLimit'];
@@ -204,7 +224,7 @@ class manager{
     function getCategories(){ // RETURN ARRAY(K-V)
         // return the list of categories as an array
         
-        if($this->sql->sqlCommand("SELECT ID, CategoryName FROM Category", array(), true) ){
+        if($this->sql->sqlCommand("SELECT ID, CategoryName FROM Category", array(), false) ){
 
             $res = $this->sql->returnAllResults();
 
@@ -229,7 +249,6 @@ class manager{
         // timestamp is used to create a unique upload file name. This is intended to be deleted after each creation and upload. 
         // images are copied in, so this could take a lot of space. 
         $date = new DateTime();
-
         if(mkdir("uploads/Export-" . $date->getTimestamp() . "/", 0777, true)){ // NAME NEEDS TO CHANGE
             // once the folder is made, we'll need to create the CSV.
             // while generating the CSV, also copy over images

@@ -65,7 +65,7 @@ if(isset($_POST['AddPlatform'])){
     // this is a platform to add.
     $manager = new manager();
 
-    $retval = $manager->addPlatform($_POST['PlatformName'], $_POST['APILink'], $_POST['RecycleLimit'], $_POST['CharacterLimit']);
+    $retval = $manager->addPlatform($_POST['PlatformName'], $_POST['APILink'], $_POST['RecycleLimit'], $_POST['CharacterLimit'], $_POST['Category']);
 
     header('location:index.php?addp=' . ($retval ? 'true' : 'false')); // return to the homepage and place result.
     die(); // we're done here. 
@@ -80,13 +80,22 @@ if(isset($_POST['AddCategory'])){
     die(); // we're done here. 
 }
 
+if(isset($_POST['AddPlatformTime'])){
+    $manager = new manager();
+
+    $retval = $manager->addPlatformTime($_POST['Platform'], $_POST['PTime']);
+
+    header('location:index.php?addpt=' . ($retval ? 'true' : 'false')); // return to the homepage and place result.
+    die(); // we're done here. 
+}
+
 if(isset($_POST['MakeCSV'])){
     // more complicated, we'll need to come up with something. 
 
     $manager = new manager();
     
     //exportCSV($plaftorm, $dateStart = false, $days = 28){
-    $retval = $manager->exportCSV($_POST['Platform'], date("l", mktime(0, 0, 0, $_POST['DateMonth'], $_POST['DateDay'], $_POST['DateYear'])), $_POST['DaysToCreate']);
+    $retval = $manager->exportCSV($_POST['Platform'], date("m-d-Y", mktime(0, 0, 0, $_POST['DateMonth'], $_POST['DateDay'], $_POST['DateYear'])), $_POST['DaysToCreate']);
 
     header('location:index.php?export=' . ($retval ? 'true' : 'false')); // return to the homepage and place result.
     die(); // we're done here. 

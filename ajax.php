@@ -31,8 +31,7 @@ if(isset($_POST['requesting'])){
                 if ($tmax < $max) $max = $tmax;
             }
         }
-        
-        
+
         echo json_encode( array( 'Limit' => $max ) );
         die(); // max one call. 
     }
