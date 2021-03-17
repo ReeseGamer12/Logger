@@ -231,9 +231,11 @@ class manager{
 
             $retval = array();
 
+            $this->categories = $res;
+
             foreach ($res as $r){
                 $retval[$r['ID']] = $r['CategoryName'];
-                $this->categories[$r['CategoryName']] = $r['Frequency'];
+                //$this->categories[$r['CategoryName']] = $r['Frequency'];
             }
 
             if(count($retval) > 0){
@@ -277,8 +279,9 @@ class manager{
         // images are copied in, so this could take a lot of space. 
         $date = new DateTime();
         $this->getCategories();
+        $folder = "uploads/Export-" . date('Y-m-d-H-m-s', $date->getTimestamp()) . "/";
         
-        if(mkdir("uploads/Export-" . $date->getTimestamp() . "/", 0777, true)){ // NAME NEEDS TO CHANGE
+        if(mkdir($folder, 0777, true)){ // NAME NEEDS TO CHANGE
             // once the folder is made, we'll need to create the CSV.
             // while generating the CSV, also copy over images
             // output the CSV to the folder. 
@@ -303,19 +306,73 @@ class manager{
 
             // now that we have a list of days, we'll need to get the list of times. 
             $times = $this->getTimesForPlatform($platform);
-        
+            
             // we now have days and times to work with. To proceed, we'll need to 
             // create a loop to run through the days.
 
-            //var_dump($daysToCreate);
+            /*  /// this determines unique categories for enforcing appropriate spacing. 
+            // determine the categories for each, for even distribution. 
+            $totalCatCount = count($daysToCreate) * count($times);
+
+            // declare and fill blank category array.
+            $categoryArray = array();
+            $categoryArray = array_fill(0, $totalCatCount, -1);
+
+            // go through each category, and determine each spot in the array.
+            foreach($this->categories as $cat){
+                for($i = 0; $i < $totalCatCount; $i += $cat['Frequency']){
+                    $didAdd = false;
+                    $x = 0;
+                    while(!$didAdd){
+                        if($categoryArray[$i + $x] == -1 || $i + $x > $totalCatCount){
+                            $didAdd = true;
+                            $categoryArray[$i + $x] = intval($cat['ID']);
+                        } 
+                        $x++;
+                    }
+                }
+            }
+            
+            // go through, for each undefined selection add a random item. 
+            for($i = 0; $i < $totalCatCount; $i++){
+                if($categoryArray[$i] == -1){
+                    $categoryArray[$i] = intval($this->categories[mt_rand(0, count($this->categories)-1)]['ID']);
+                }
+            }
+
+            var_dump($categoryArray);
+
+            foreach($categoryArray as $c){
+                echo $c . '<br />';
+            }
+
+            die();
+            */
+
+            // blank CSV variable to write in later. 
+            $csvContent = '';
+            $msgNum = 0;
 
             foreach($daysToCreate as $day){
                 // for each day, cycle through the times and pull message. 
                 foreach($times as $time){
                     $message = $this->getMessage($platform, $day, $time);
                     
-                    var_dump($message);
+                    // temp output to see what we get 
+                    echo date('Y-m-d', $day) . ' ' . $time . '<br />';
+                    echo 'ID: ' . $message['ID'] . ' CAT: ' . $message['CategoryID'] . ' Msg: ' . $message['Message'] . '<br />';
                     
+                    // move images to the new folder, renamed as Image<msg count>-<image x of x>
+                    $imageNames = $this->getImages($message['ID'], $msgNum, $folder);
+                    
+                    var_dump($imageNames);
+                    echo '<br /><br />';
+
+                    //output data as CSV content. 
+                    // we'll use , and " as delimiters. 
+                    //---------------------------------------------------------------------------!!
+                    $csvContent .= '\r';
+                    $msgNum++;
                 }
             }
 
@@ -333,6 +390,30 @@ class manager{
         return false; // somehow failed. 
     }    
 
+    private function getImages($id, $msgNum, $folder){ // RETURN ARRAY(V)
+         // get the image ID's
+        $this->sql->sqlCommand("SELECT Image FROM Image WHERE MessageID = :id", array(':id' => $id), false);
+        $rets = $this->sql->returnAllResults();
+
+        $names = array();
+        $imgcount = 0;
+        foreach($rets as $r){
+            // for each image, create a file name then copy to the folder. 
+            $theext = explode('.', $r['Image']);
+            $ext = strtolower(array_pop($theext));
+            $imagename = 'Message-' . $msgNum . '-' . $imgcount . '.' . $ext;
+            
+            $names[] = $imagename;
+
+            // copy images from main area to this folder.
+            copy($r['Image'], $folder . $imagename);
+            $imgcount++;
+        }
+
+        return $names; 
+    }
+
+
     private function getMessage($platform, $day, $time){ // RETURN ARRAY(K-V)
         
         $lastSendNo = $this->getLastSend($platform);
@@ -342,13 +423,12 @@ class manager{
         // 1: check for any message on day at time, check for all, set up highest priority. 
         $this->sql->sqlCommand("SELECT * FROM Message 
                     WHERE PlatformID = :id
-                    AND SendNo = -1
                     AND DateTime = :datetime
                     ORDER BY Priority DESC", 
             array(
                 ':id' => $platform,
                 ':datetime' => gmdate("Y-m-d", $day) . ' ' . str_pad($time, 8, '0', STR_PAD_LEFT)
-            ), true);
+            ), false);
 
         $ret = $this->sql->returnAllResults();
         
@@ -361,13 +441,14 @@ class manager{
             echo '<br />area 1<br />';
 
             // update the messsage in the DB. 
-            $this->updateMessage($ret[0]['ID']);
+            $this->updateMessage($ret[0]['ID'], $lastSendNo, $ret[0]['DateTime'],
+                    $ret[0]['RepeatBool'], $ret[0]['RepeatTimes'], $ret[0]['RepeatDays'] );
 
             if(count($ret) > 1){
                 // for each, delayMessage($id)
                 for($i = 1; $i < count($ret); $i++){
                     // for each message, apply the delay.
-                    $this->delayMessage($ret[$i]['ID']);
+                    $this->delayMessage($ret[$i]['ID'], $ret[$i]['DateTime']);
                 }
             }
             
@@ -398,7 +479,7 @@ class manager{
                 ':id' => $platform,
                 ':datetime' => $noSchedule,
                 ':lastSend' => $lastSendNo
-            ), true);
+            ), false);
 
             $ret = $this->sql->returnAllResults();
         
@@ -413,6 +494,8 @@ class manager{
                 $this->sql->sqlCommand("SELECT * FROM Message as M
                         WHERE M.PlatformID = :id
                         AND M.DateTime = :datetime
+                        AND :lastSend - M.SendNo >= 
+                            (SELECT RecycleLimit FROM Platforms WHERE ID = :id LIMIT 1) 
                         AND (:lastSend - 
                             (SELECT SendNo FROM Message as E 
                                 WHERE E.PlatformID = :id 
@@ -429,7 +512,7 @@ class manager{
                     ':id' => $platform,
                     ':datetime' => $noSchedule,
                     ':lastSend' => $lastSendNo
-                ), true);
+                ), false);
 
                 $ret = $this->sql->returnAllResults();
 
@@ -445,7 +528,7 @@ class manager{
                     $this->sql->sqlCommand("SELECT * FROM Message as M
                             WHERE M.PlatformID = :id
                             AND M.SendNo = -1
-                            AND M.DateTime = :datetime               
+                            AND M.DateTime = :datetime 
                             ORDER BY Priority DESC, 
                             :lastSend - 
                             (SELECT SendNo FROM Message as E 
@@ -454,8 +537,9 @@ class manager{
                                 ORDER BY SendNo DESC LIMIT 1) ASC", 
                     array(
                         ':id' => $platform,
-                        ':datetime' => $noSchedule
-                    ), true);
+                        ':datetime' => $noSchedule,
+                        ':lastSend' => $lastSendNo
+                    ), false);
                     
                     $ret = $this->sql->returnAllResults();
 
@@ -468,7 +552,9 @@ class manager{
 
                         $this->sql->sqlCommand("SELECT * FROM Message as M
                                 WHERE M.PlatformID = :id
-                                AND M.DateTime = :datetime             
+                                AND M.DateTime = :datetime 
+                    AND :lastSend - M.SendNo >= 
+                            (SELECT RecycleLimit FROM Platforms WHERE ID = :id LIMIT 1) 
                                 ORDER BY Priority DESC, 
                             :lastSend - 
                             (SELECT SendNo FROM Message as E 
@@ -477,8 +563,9 @@ class manager{
                                 ORDER BY SendNo DESC LIMIT 1) ASC", 
                         array(
                             ':id' => $platform,
-                            ':datetime' => $noSchedule
-                        ), true);
+                            ':datetime' => $noSchedule,
+                            ':lastSend' => $lastSendNo
+                        ), false);
 
                         $ret = $this->sql->returnAllResults();
 
@@ -514,8 +601,9 @@ class manager{
         $ret = '';
 
         $pick = mt_rand(0, count($newRet) - 1);
-
-        $this->updateMessage($newRet[$pick]['ID']);
+        
+        $this->updateMessage($newRet[$pick]['ID'], $lastSendNo, $newRet[$pick]['DateTime'],
+                    $newRet[$pick]['RepeatBool'], $newRet[$pick]['RepeatTimes'], $newRet[$pick]['RepeatDays'] );
 
         return $newRet[$pick];
     }
@@ -536,30 +624,70 @@ class manager{
         $cmd = "UPDATE Message SET SendNo = :sendNo";
         $attsArr = array(':sendNo' => ($lastsend > -1 ? $lastsend + 1 : 1));
         
-        if(repeatbool == 1){
+        $valtest = false;
+
+        if($repeatbool == 1 || $repeatbool == true){
+            
+            //echo 'DO REPEAT <br />';
+            $valtest = true; 
             // there is a repeat to occur. 
             $newTime = strtotime($datetime) + 24*60*60*$repeatdays;
             
-            // check time is not on a weekend =--------------------------------------!!
-
+            // check time is not on a weekend 
+            $weekend = false;
+            while(!$weekend){
+                $dayOfWeek = date('w', $newTime);
+                if($dayOfWeek != 0 && $dayOfWeek != 6){
+                    $weekend = true; // this is OK. 
+                } else {
+                    $newTime += 24*60*60; // add a day. 
+                }
+            }
+            
             $cmd .= ", DateTime = :datetime";
             $attsArr[':datetime'] = date("Y-m-d H:i:s", $newTime);
 
-            if($repeattimes <= 1){
-                // this will be the last one. ----------------------------------------!!
+            if($repeattimes <= 0){
+                // that was actually the last one. 
+                $cmd .= ", RepeatBool = 0"; // set it to false
             } else {
-                // just reduce by one. -----------------------------------------------!!
+                // just reduce by one. 
+                $cmd .= ", RepeatTimes = :times";
+                $attsArr[':times'] = $repeattimes - 1;
             }
 
         }
         
-        $cmd .= " WHERE ID = :id";
+        
 
-        //$this->sql->sqlCommand()
+        $cmd .= " WHERE ID = :id";
+        $attsArr[':id'] = $id;
+
+        echo $cmd . '<br />';
+
+        $this->sql->sqlCommand($cmd, $attsArr, $valtest);
     
     }
 
-    private function delayMessage($id){
+    private function delayMessage($id, $datetime){
         // set a message delay of 24 hours on the current timed message.
+        
+
+        $newTime = strtotime($datetime) + 24*60*60;
+
+        $weekend = false;
+        while(!$weekend){
+            $dayOfWeek = date('w', $newTime);
+            if($dayOfWeek != 0 && $dayOfWeek != 6){
+                $weekend = true; // this is OK. 
+            } else {
+                $newTime += 24*60*60; // add a day. 
+            }
+        }
+
+        $cmd = "UPDATE Message SET DateTime = :datetime WHERE ID = :id";
+        $attsArr = array(':id' => $id, ':datetime' => $newTime);
+
+        $this->sql->sqlCommand($cmd, $attsArr, false);
     }
 }
