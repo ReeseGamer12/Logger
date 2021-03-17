@@ -359,27 +359,37 @@ class manager{
                     $message = $this->getMessage($platform, $day, $time);
                     
                     // temp output to see what we get 
-                    echo date('Y-m-d', $day) . ' ' . $time . '<br />';
-                    echo 'ID: ' . $message['ID'] . ' CAT: ' . $message['CategoryID'] . ' Msg: ' . $message['Message'] . '<br />';
+                    //echo date('Y-m-d', $day) . ' ' . $time . '<br />';
+                    //echo 'ID: ' . $message['ID'] . ' CAT: ' . $message['CategoryID'] . ' Msg: ' . $message['Message'] . '<br />';
                     
                     // move images to the new folder, renamed as Image<msg count>-<image x of x>
                     $imageNames = $this->getImages($message['ID'], $msgNum, $folder);
                     
-                    var_dump($imageNames);
-                    echo '<br /><br />';
+                    //var_dump($imageNames);
+                    //echo '<br /><br />';
 
                     //output data as CSV content. 
                     // we'll use , and " as delimiters. 
                     //---------------------------------------------------------------------------!!
-                    $csvContent .= '\r';
+                    $csvContent .= '"' . date('m/d/Y', $day) . '","' . $time . '","' . $message['Message'] . '"';
+
+                    foreach($imageNames as $i){
+                        $csvContent .= ',"' . $i . '"';
+                    }
+                    
+                    $csvContent .= "\n";
                     $msgNum++;
                 }
             }
 
+            var_dump($csvContent);
+
+            $file = fopen($folder . "messages.csv", "w") or die("Cannot Create File");
+            fwrite($file, $csvContent);
+            fclose($file);
 
 
-
-            die ();// WE'll clear this later so we can see results. 
+            //die ();// WE'll clear this later so we can see results. 
 
 
             // we're done, folder is complete! 
@@ -400,13 +410,16 @@ class manager{
         foreach($rets as $r){
             // for each image, create a file name then copy to the folder. 
             $theext = explode('.', $r['Image']);
+            
             $ext = strtolower(array_pop($theext));
+            
             $imagename = 'Message-' . $msgNum . '-' . $imgcount . '.' . $ext;
             
             $names[] = $imagename;
 
             // copy images from main area to this folder.
             copy($r['Image'], $folder . $imagename);
+            
             $imgcount++;
         }
 
@@ -438,7 +451,7 @@ class manager{
             // 1c: if message is a repeat, schedule this one then reschedule as per repeat.
             // TO DO
             
-            echo '<br />area 1<br />';
+            //echo '<br />area 1<br />';
 
             // update the messsage in the DB. 
             $this->updateMessage($ret[0]['ID'], $lastSendNo, $ret[0]['DateTime'],
@@ -486,7 +499,7 @@ class manager{
             if(count($ret) > 0){
                 // there is at least 1 result.
                 
-                echo '<br />area 2<br />';
+               // echo '<br />area 2<br />';
             } else {
 
                 // 3: if all messages are already sent once or in unusable categories, check for recycled messages.
@@ -519,7 +532,7 @@ class manager{
                 if(count($ret) > 0){
                     // there is at least 1 result.
                     
-                    echo '<br />area 3<br />';
+                    //echo '<br />area 3<br />';
                 } else {
 
                     // 4: if no recycled messages available, go to 2 (then 3) but find the category with the least "wait" time for next message,
@@ -546,7 +559,7 @@ class manager{
                     if(count($ret) > 0){
                         // there is at least 1 result.
                         
-                        echo '<br />area 4<br />';
+                        //echo '<br />area 4<br />';
                     } else {
                         // 5: really, any message at this point is OK. 
 
@@ -575,7 +588,7 @@ class manager{
                             // 1c: if message is a repeat, schedule this one then reschedule as per repeat.
                             // TO DO
                             
-                            echo '<br />area 5<br />';
+                           // echo '<br />area 5<br />';
                         } 
 
                         // there should ALWAYS be a message to send ideally. If nothing is valid through 4, return false and an error to user 
@@ -663,7 +676,7 @@ class manager{
         $cmd .= " WHERE ID = :id";
         $attsArr[':id'] = $id;
 
-        echo $cmd . '<br />';
+        //echo $cmd . '<br />';
 
         $this->sql->sqlCommand($cmd, $attsArr, $valtest);
     
