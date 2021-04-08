@@ -186,6 +186,7 @@ class manager{
     }
 
     
+    
     function getPlatforms(){ // RETURN ARRAY(K->V) OR FALSE
         // return the list of platforms as an array
         
@@ -247,6 +248,48 @@ class manager{
         return false;
     }
 
+    function getCatByID($id){ // RETURN ARRAY(K-V)
+        // return the frequency, total Messages, Total new, total valid.
+
+        $retval = array();
+
+        if($this->sql->sqlCommand("SELECT Frequency FROM Category WHERE ID = :ID", array(':ID' => $id), false) ){
+
+            $res = $this->sql->returnResults();
+
+            $retval['Frequency'] = $res['Frequency'];
+        }
+        
+        if($this->sql->sqlCommand("SELECT count(ID) as total FROM Message WHERE CategoryID = :ID", array(':ID' => $id), false) ){
+        
+            $res = $this->sql->returnResults();
+
+            $retval['Total'] = $res['total'];
+        
+        }
+
+        if($this->sql->sqlCommand("SELECT count(ID) as total FROM Message WHERE CategoryID = :ID AND SendNo = '-1'", array(':ID' => $id), false) ){
+        
+            $res = $this->sql->returnResults();
+
+            $retval['New'] = $res['total'];
+        
+        }
+
+        if($this->sql->sqlCommand("SELECT count(M.ID) as total FROM Message as M
+                WHERE M.CategoryID = :ID AND 
+                M.SendNo - (SELECT RecycleLimit FROM Platforms as P WHERE P.ID = M.PlatformID LIMIT 1) >= 0", array(':ID' => $id), false) ){
+        
+            $res = $this->sql->returnResults();
+
+            $retval['Valid'] = $res['total'] + $retval['New'];
+        
+        }
+
+        return $retval;
+
+    }
+
     function getTimesForPlatform($platform){ // RETURN ARRAY(V) or FALSE
         // return a list of time objects for the given platform. 
 
@@ -259,6 +302,33 @@ class manager{
             foreach ($res as $r){
                 $retval[] = $r['PlatformTime'];
             }
+
+            if(count($retval) > 0){
+                return $retval;
+            }
+            
+            return false;
+        }
+
+        // this failed, for some reason.
+        return false;
+
+    }
+
+    function getAllTimes(){ // RETURN ARRAY(V) or FALSE
+        // return a list of time objects, all unique
+
+        if($this->sql->sqlCommand("SELECT PlatformTime FROM PlatformTime", array(), false) ){
+
+            $res = $this->sql->returnAllResults();
+
+            $retval = array();
+
+            foreach ($res as $r){
+                $retval[] = $r['PlatformTime'];
+            }
+
+            $retval = array_unique($retval);
 
             if(count($retval) > 0){
                 return $retval;
@@ -371,18 +441,23 @@ class manager{
                     //output data as CSV content. 
                     // we'll use , and " as delimiters. 
                     //---------------------------------------------------------------------------!!
-                    $csvContent .= '"' . date('m/d/Y', $day) . '","' . $time . '","' . $message['Message'] . '"';
-
+                    
+                    /*$csvContent .= '"' . date('d/m/Y', $day) . ' ' . $time . '","' . $message['Message'] . '"';
+                    
                     foreach($imageNames as $i){
                         $csvContent .= ',"' . $i . '"';
-                    }
+                    }*/
+
+                    // for now, we'll only create posts with 1 image. We'll be unlikely to do multi-image posts. 
+                    $csvContent .= '"' . $message['Message'] . '","<PATH>' . (isset($imageNames[0]) ? $imageNames[0] : '') . '","' . date('d/m/Y', $day) . ' ' . substr($time, 0, -3)   . '"';
+
                     
                     $csvContent .= "\n";
                     $msgNum++;
                 }
             }
 
-            var_dump($csvContent);
+            //var_dump($csvContent);
 
             $file = fopen($folder . "messages.csv", "w") or die("Cannot Create File");
             fwrite($file, $csvContent);
@@ -566,7 +641,7 @@ class manager{
                         $this->sql->sqlCommand("SELECT * FROM Message as M
                                 WHERE M.PlatformID = :id
                                 AND M.DateTime = :datetime 
-                    AND :lastSend - M.SendNo >= 
+                        AND :lastSend - M.SendNo >= 
                             (SELECT RecycleLimit FROM Platforms WHERE ID = :id LIMIT 1) 
                                 ORDER BY Priority DESC, 
                             :lastSend - 

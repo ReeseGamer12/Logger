@@ -44,7 +44,7 @@ $now = time() + 3600*($timezone+date("I"));
                 <select name="DateMonth"> <?php outputMonths(); ?> </select>
                 <select name="DateDay"> <?php outputDays(); ?> </select>  
                 <select name="DateYear"> <?php outputYear(); ?> </select>
-                <select name="DateTime"> <?php outputTime(); ?> </select>
+                <select name="DateTime"> <?php outputOnlyTimes(); ?> </select>
             </div>
             
             <label for="Priority">Priority (1-100)</label> <input name="Priority" id="Priority" type="text" value="1" /><br />
@@ -117,6 +117,25 @@ $now = time() + 3600*($timezone+date("I"));
             <input type="submit" name="MakeCSV" />
         </form>
 
+        </div>
+        <div id="sidebar">
+            <h3>Categories:</h3>
+            <?php
+                $manager = new manager(); // generate manager to get info. 
+                $categories = $manager->getCategories(); // get all cats as id->name
+
+                foreach($categories as $k => $v){
+                    // output the data on a per-category basis.
+                    echo '<p><strong>' . $v . '</strong></p>';
+
+                    $MSG = $manager->getCatByID($k);
+
+                    foreach($MSG as $q => $a){
+                        echo $q . ': ' . $a . '<br />';
+                    }
+
+                }
+            ?>
         </div>
     </body>
 </html>

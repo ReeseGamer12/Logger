@@ -85,6 +85,18 @@ function outputTime(){
     }
 }
 
+function outputOnlyTimes() {
+    // only output the times as saved in the DB. 
+    $manager = new manager();
+
+    $times = $manager->getAllTimes();
+
+    foreach($times as $t){
+        echo '<option value="' . $t . '">' . $t . '</option>';
+    }
+
+}
+
 function outputPlatformCheck(){
     // we'll have to get the platforms here.
     $manager = new manager();

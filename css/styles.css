@@ -18,7 +18,7 @@
 }
 
 #content {
-    margin: 0 auto;
+    margin: 30px;
     width: 750px;
 }
 
@@ -87,4 +87,14 @@ select{
 
 #datetimecsv select{
     width: 135px;
+}
+
+#sidebar{
+    position: fixed;
+    top: 0;
+    right: 0;
+    width: 200px;
+    height: 100%;
+    border-left: 1px solid black;
+    padding-left: 10px;
 }
