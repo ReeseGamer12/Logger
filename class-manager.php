@@ -276,10 +276,16 @@ class manager{
         
         }
 
-        if($this->sql->sqlCommand("SELECT count(M.ID) as total FROM Message as M
+        /*if($this->sql->sqlCommand("SELECT count(M.ID) as total FROM Message as M
                 WHERE M.CategoryID = :ID AND 
                 M.SendNo - (SELECT RecycleLimit FROM Platforms as P WHERE P.ID = M.PlatformID LIMIT 1) >= 0", array(':ID' => $id), false) ){
-        
+        */
+        if($this->sql->sqlCommand("SELECT count(M.ID) as total FROM Message as M, Platforms as P
+                WHERE M.CategoryID = :ID AND 
+                P.ID = M.PlatformID AND
+                P.MsgCount - M.SendNo >= P.RecycleLimit", array(':ID' => $id), false) ){
+
+
             $res = $this->sql->returnResults();
 
             $retval['Valid'] = $res['total'] + $retval['New'];
@@ -457,7 +463,12 @@ class manager{
                 }
             }
 
-            //var_dump($csvContent);
+            // Update the total lines used to the platform for all future calculations. While this is not a rolling 
+            // update, this way is preferred as it allows more randomization in each block of messages. 
+            if( !$this->sql->sqlCommand("UPDATE Platforms Set MsgCount = MsgCount + :count WHERE ID = :plat", array(':plat' => $platform, ':count' => $msgNum), true)){
+                error_log("ERROR: Platform number not updated.");
+            }
+            
 
             $file = fopen($folder . "messages.csv", "w") or die("Cannot Create File");
             fwrite($file, $csvContent);
