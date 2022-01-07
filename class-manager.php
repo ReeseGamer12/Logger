@@ -283,12 +283,12 @@ class manager{
         if($this->sql->sqlCommand("SELECT count(M.ID) as total FROM Message as M, Platforms as P
                 WHERE M.CategoryID = :ID AND 
                 P.ID = M.PlatformID AND
-                P.MsgCount - M.SendNo >= P.RecycleLimit", array(':ID' => $id), false) ){
+                M.SendNo <= (SELECT A.SendNo FROM Message as A WHERE A.PlatformID = P.ID ORDER BY A.SendNo DESC LIMIT 1) - P.RecycleLimit", array(':ID' => $id), false) ){
 
 
             $res = $this->sql->returnResults();
 
-            $retval['Valid'] = $res['total'] + $retval['New'];
+            $retval['Valid'] = $res['total'];
         
         }
 
